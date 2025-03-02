@@ -47,7 +47,7 @@ export default function configureSocket(server) {
     socket.join(userId);
 
     // Handle sending messages
-    socket.on("sendMessage", async ({ conversationId, content }) => {
+    socket.on("sendMessage", async ({ conversationId, content, tempId }) => {
       try {
         // Save message to database
         const message = await Message.create({
@@ -67,19 +67,27 @@ export default function configureSocket(server) {
         // Get conversation to find recipients
         const conversation = await Conversation.findById(conversationId);
 
-        // Emit message to all participants in the conversation
+        // Enhanced message object with additional metadata
+        const enhancedMessage = {
+          ...message,
+          conversationId,
+          tempId, // Include temporary ID to match with optimistic updates
+          status: "sent",
+        };
+
+        // Emit message to ALL participants (including sender)
         conversation.participants.forEach((participantId) => {
           const participantStrId = participantId.toString();
-          socket.to(participantStrId).emit("newMessage", {
-            ...message,
-            conversationId,
-          });
+          io.to(participantStrId).emit("messageUpdate", enhancedMessage);
         });
-
-        // Send back confirmation to sender
-        socket.emit("messageSent", { message });
       } catch (error) {
-        socket.emit("messageError", { error: error.message });
+        console.error("Error sending message:", error);
+        // Emit error back to sender
+        socket.emit("messageError", {
+          error: error.message,
+          tempId, // Return the tempId so client can identify the failed message
+          conversationId,
+        });
       }
     });
 

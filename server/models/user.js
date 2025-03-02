@@ -45,6 +45,7 @@ export default {
   },
 
   async list(excludeId = null) {
+    const usersCollection = getCollection();
     let query = {};
     if (excludeId) {
       query = { _id: { $ne: new ObjectId(excludeId) } };

@@ -95,9 +95,15 @@ router.get("/me", authenticate, async (req, res) => {
 // Get all users (except current user)
 router.get("/", authenticate, async (req, res) => {
   try {
-    const users = await User.list(req.user._id.toString());
+    const userId = req.user._id.toString();
+    console.log(`Fetching users (excluding user ${userId})`);
+
+    const users = await User.list(userId);
+    console.log(`Found ${users.length} users`);
+
     res.json(users);
   } catch (error) {
+    console.error("Error fetching users:", error);
     res
       .status(500)
       .json({ message: "Error fetching users", error: error.message });
