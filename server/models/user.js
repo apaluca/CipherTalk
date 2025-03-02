@@ -1,5 +1,5 @@
 import { ObjectId } from "mongodb";
-import db from "../db/connection.js";
+import dbConnection from "../db/connection.js";
 import bcrypt from "bcrypt";
 
 const getCollection = () => {
